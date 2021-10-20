@@ -91,4 +91,6 @@ Insert Into @Timeline Select Date From DateIntervalsCTE
 OPTION (MAXRECURSION 32767);
 ```
 
-
+### Main Script File
++-- port-utilization.ps1
+This script is self explanatory as the script has comments for almost every line.  
