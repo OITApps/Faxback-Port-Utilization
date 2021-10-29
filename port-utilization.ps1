@@ -12,7 +12,7 @@
 
 param(
     ## The SQL file which will only query the current hour when the script is executed
-    $SQLFile = 'HourlySQLReportQuery.sq',
+    $SQLFile = 'HourlySQLReportQuery.sql',
 
     ## The max port is the license of allowed port on faxback
     $MaxPort = 24,
@@ -26,6 +26,16 @@ param(
 
 $Hostname = $env:COMPUTERNAME
 $LogDT = $((get-date).ToLocalTime()).ToString("yyyy-MM-dd HH:mm:ss")
+
+$CurrentDateTimeHour = $((get-date).ToLocalTime()).ToString("yyyy-MM-dd HH")
+$StartTime = "$($CurrentDateTimeHour):00:00"
+$EndTime =  "$($CurrentDateTimeHour):59:59"
+
+## *** TEST *** 
+# This is the expected value, and you can adjust and uncomment this value to test the script
+#$StartTime = "2021-10-28 8:00:00"
+#$EndTime =  "2021-10-28 8:59:59"
+
 
 ## Script variables
 ## SQLServerName is the DB connection name
@@ -89,14 +99,6 @@ if( -not (Test-Path $SQLInputFile) ){
 }
 
 
-$CurrentDateTimeHour = $((get-date).ToLocalTime()).ToString("yyyy-MM-dd HH")
-$StartTime = "$($CurrentDateTimeHour):00:00"
-$EndTime =  "$($CurrentDateTimeHour):59:59"
-
-## This is the expected value, and you can adjust and uncomment this value to test the script
-#$StartTime = "2021-10-18 08:00:00"
-#$EndTime =  "2021-10-18 08:59:59"
-
 ## We invoke the report function and we pass the SQLInputFile, DatetimeStart and DateTimeEnd as defined above
 $Report = invoke-report -SQLInFile $SQLInputFile -ReportDateTimeStart $StartTime -ReportDateTimeEnd $EndTime
 
@@ -104,6 +106,17 @@ $Report = invoke-report -SQLInFile $SQLInputFile -ReportDateTimeStart $StartTime
 $FailedReport = $Report | Where-Object { $_.Total -gt $MaxPort }
 
 ## We then create a log of this failed report which LogDNA will pickup as saved in the LogDir
-$FailedReport
-if( $FailedReport.Length -gt 0){ $FailedReport <##| convertto-json -Depth 1 #>| Out-File $FailLog }
+# $FailedReport
 
+if( $FailedReport.Length -gt 0){
+    $report = ""
+    $FailedReport | ForEach-Object {
+        $report += "Date=$($_.Minute) Port=$($_.Total)`r`n" 
+    }
+    $Report | Out-File -FilePath $FailLog -Encoding utf8 -Append
+    ## Now check the log file it generated
+}
+
+
+## MY TEAMS GENERAL Channel email address
+#5afeaf16.oit.co@amer.teams.ms
